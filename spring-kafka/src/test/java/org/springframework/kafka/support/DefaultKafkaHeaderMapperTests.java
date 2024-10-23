@@ -16,9 +16,6 @@
 
 package org.springframework.kafka.support;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.entry;
-
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -47,6 +44,13 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 /**
  * @author Gary Russell
@@ -358,6 +362,20 @@ public class DefaultKafkaHeaderMapperTests {
 		mapper.fromHeaders(new MessageHeaders(springHeaders), headers);
 		assertThat(headers.lastHeader(SerializationUtils.KEY_DESERIALIZER_EXCEPTION_HEADER)).isNull();
 		assertThat(headers.lastHeader(SerializationUtils.VALUE_DESERIALIZER_EXCEPTION_HEADER)).isNull();
+	}
+
+	@Test
+	void ensureNullHeaderValueHandledGraciously() {
+		DefaultKafkaHeaderMapper mapper = new DefaultKafkaHeaderMapper();
+
+		Header mockHeader = mock(Header.class);
+		given(mockHeader.value()).willReturn(null);
+
+		Object result = mapper.headerValueToAddIn(mockHeader);
+
+		assertThat(result).isNull();
+		verify(mockHeader).value();
+		verify(mockHeader, never()).key();
 	}
 
 	public static final class Foo {
